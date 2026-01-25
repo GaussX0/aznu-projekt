@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <a href="index.html" >Powrót do menu</a>
+    <h2>Złóż wniosek</h2>
+    <form id="form">
+        <label>Imię:</label>
+        <input type="text" id="firstName" required>
+        
+        <label>Nazwisko:</label>
+        <input type="text" id="lastName" required>
+        
+        <label>Język:</label>
+        <input type="text" id="language" required placeholder="np. Angielski">
+        
+        <button type="submit">Złóż wniosek</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                language: document.getElementById('language').value
+            };
+
+            try {
+                const res = await fetch('api/application', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const json = await res.json();
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = `<strong>Wniosek przyjęty!</strong><br>ID twojego wniosku to:<br><br><b>${json.applicationId}</b><br><br>Skopiuj je, by później móc sprawdzić werdykt.`;
+            } catch (err) {
+                alert("Nie udało się wysłać wniosku." + err);
+            }
+        });
+    </script>
+</body>
+</html>

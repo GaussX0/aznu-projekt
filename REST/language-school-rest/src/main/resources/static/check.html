@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <div>
+        <a href="index.html">Powrót do menu</a>
+        <h2>Sprawdź status swojego wniosku</h2>
+        <form id="form">
+            <label>ID twojego wniosku:</label>
+            <input type="text" id="appId" required placeholder="Wklej tutaj ID...">
+            <button type="submit">Sprawdź status</button>
+        </form>
+    </div>
+    
+    <div>
+        <div>Status: <span id="statusText"></span></div>
+        <div id="messageText"></div>
+    </div>
+
+    <script>
+        document.getElementById('form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('appId').value.trim();
+            const statusSpan = document.getElementById('statusText');
+            const messageDiv = document.getElementById('messageText');
+
+            try {
+                const res = await fetch(`api/application/${id}`);
+                const json = await res.json();
+                statusSpan.innerText = json.status;
+                messageDiv.innerText = json.message;
+            } catch (err) {
+                alert("Błąd połączenia z serwerem.");
+            }
+        });
+    </script>
+</body>
+</html>
