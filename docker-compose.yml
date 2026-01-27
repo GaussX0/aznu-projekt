@@ -31,16 +31,37 @@ services:
     environment:
       - SERVER_PORT=8080
 
-  rest-service:
-    build: ./REST/language-school-rest
+  # rest-gateway:
+  #   build: ./REST/language-school-rest
+  #   ports:
+  #     - "8090:8090"
+  #   depends_on:
+  #     - kafka
+  #     - soap-service
+  #   environment:
+  #     - SERVER_PORT=8090
+  #     - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+  #     - KAFKA_SERVER=kafka:29092
+  #     - SOAP_HOST=soap-service
+  #   restart: on-failure
+
+  rest-gateway:
+    build: ./REST/language-school-gateway
     ports:
       - "8090:8090"
     depends_on:
       - kafka
-      - soap-service
     environment:
       - SERVER_PORT=8090
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_SERVER=kafka:29092
+
+  rest-worker:
+    build: ./REST/language-school-worker
+    depends_on:
+      - kafka
+      - soap-service
+    environment:
       - KAFKA_SERVER=kafka:29092
       - SOAP_HOST=soap-service
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
     restart: on-failure

@@ -68,11 +68,6 @@
             <artifactId>cxf-rt-transports-http</artifactId>
             <version>4.0.3</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.camel.springboot</groupId>
-            <artifactId>camel-cxf-soap-starter</artifactId>
-            <version>${camel.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>jakarta.xml.ws</groupId>
@@ -109,31 +104,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-codegen-plugin</artifactId>
-                <version>4.0.3</version> <executions>
-                <execution>
-                    <id>generate-sources</id>
-                    <phase>generate-sources</phase>
-                    <configuration>
-                        <sourceRoot>${project.build.directory}/generated-sources/cxf</sourceRoot>
-                        <wsdlOptions>
-                            <wsdlOption>
-                                <wsdl>${project.basedir}/src/main/resources/languages.wsdl</wsdl>
-                                <extraargs>
-                                    <extraarg>-p</extraarg>
-                                    <extraarg>org.aznu.languages.wsdl</extraarg>
-                                </extraargs>
-                            </wsdlOption>
-                        </wsdlOptions>
-                    </configuration>
-                    <goals>
-                        <goal>wsdl2java</goal>
-                    </goals>
-                </execution>
-            </executions>
             </plugin>
         </plugins>
     </build>

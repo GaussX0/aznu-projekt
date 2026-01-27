@@ -67,6 +67,8 @@ public class LanguageSchoolGatewayService extends RouteBuilder {
             .process(exchange -> {
                 String appId = UUID.randomUUID().toString();
                 exchange.getMessage().setHeader("applicationId", appId);
+                stateService.sendEvent(appId, ProcessingEvent.START);
+                log.info("START: " + appId);
             })
             .marshal().json(JsonLibrary.Jackson)
             .to("kafka:SchoolReqTopic?brokers={{kafka.server}}")
@@ -76,6 +78,8 @@ public class LanguageSchoolGatewayService extends RouteBuilder {
                 resp.setApplicationId(appId);
                 resp.setStatus("W TRAKCIE WERYFIKACJI");
                 resp.setMessage("Wniosek został przyjęty do weryfikacji.");
+                stateService.sendEvent(appId, ProcessingEvent.FINISH);
+                log.info("FINISH(w trakcie weryfikacji): " + appId);
                 exchange.getMessage().setBody(resp);
             });
 
@@ -91,55 +95,14 @@ public class LanguageSchoolGatewayService extends RouteBuilder {
                     response.setMessage(result.getReason());
                     db.put(appId, response);
                     stateService.sendEvent(appId, ProcessingEvent.COMPLETE);
-                    log.info("Saga zakończona. Wynik zapisany w DB: " + status);
+                    log.info("COMPLETE: Status dla " + appId + ": " + status);
                 });
 
         from("kafka:SchoolFailTopic?brokers={{kafka.server}}")
             .process(exchange -> {
                 String appId = exchange.getMessage().getHeader("applicationId", String.class);
                 stateService.sendEvent(appId, ProcessingEvent.CANCEL);
-                log.info("Saga anulowana dla wniosku o ID: " + appId);
+                log.info("CANCEL: " + appId);
             });
-
-        from("kafka:SchoolReqTopic?brokers={{kafka.server}}&groupId=verifierGroup")
-            .routeId("verify-language-route")
-            .log("Pobrano z Kafki wniosek: ${body}")
-            .unmarshal().json(JsonLibrary.Jackson, SchoolApplication.class)
-            .process(exchange -> {
-                SchoolApplication app = exchange.getMessage().getBody(SchoolApplication.class);
-                String appId = exchange.getMessage().getHeader("applicationId", String.class);
-
-                ProcessingState previousState = stateService.sendEvent(appId, ProcessingEvent.START);
-                exchange.getMessage().setHeader("previousState", previousState);
-
-                org.aznu.languages.wsdl.LanguageRequest soapRequest = new org.aznu.languages.wsdl.LanguageRequest();
-                soapRequest.setName(app.getLanguage());
-                exchange.getMessage().setBody(soapRequest);
-            })
-            .choice()
-            .when(header("previousState").isNotEqualTo(ProcessingState.CANCELLED))
-            .to("cxf://http://{{soap.host}}:8080/soap-api/languages?serviceClass=org.aznu.languages.wsdl.LanguagePort&wsdlURL=http://{{soap.host}}:8080/soap-api/languages?wsdl")
-            .process(exchange -> {
-                org.apache.cxf.message.MessageContentsList responseList =
-                        exchange.getMessage().getBody(org.apache.cxf.message.MessageContentsList.class);
-                org.aznu.languages.wsdl.LanguageResponse soapResponse =
-                        (org.aznu.languages.wsdl.LanguageResponse) responseList.get(0);
-
-                String appId = exchange.getMessage().getHeader("applicationId", String.class);
-                VerificationResult result = new VerificationResult();
-                result.setApplicationId(appId);
-                result.setVerified(soapResponse.isIsAvailable());
-                result.setReason(soapResponse.getReason());
-
-                exchange.getMessage().setBody(result);
-                ProcessingState oldState = stateService.sendEvent(appId, ProcessingEvent.FINISH);
-                exchange.getMessage().setHeader("previousState", oldState);
-            })
-            .marshal().json(JsonLibrary.Jackson)
-            .to("kafka:SchoolResultTopic?brokers={{kafka.server}}")
-            .log("Weryfikacja zakończona. Wynik wysłany na SchoolResultTopic.")
-            .otherwise()
-            .log("Proces przerwany - wykryto stan CANCELLED dla ID: ${header.applicationId}")
-            .end();
     }
 }
