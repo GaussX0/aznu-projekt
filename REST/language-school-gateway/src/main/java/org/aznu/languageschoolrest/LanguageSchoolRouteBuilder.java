@@ -78,6 +78,7 @@ public class LanguageSchoolRouteBuilder extends RouteBuilder {
                 resp.setApplicationId(appId);
                 resp.setStatus("W TRAKCIE WERYFIKACJI");
                 resp.setMessage("Wniosek został przyjęty do weryfikacji.");
+                db.put(appId, resp);
                 stateService.sendEvent(appId, ProcessingEvent.FINISH);
                 log.info("FINISH(w trakcie weryfikacji): " + appId);
                 exchange.getMessage().setBody(resp);
@@ -93,6 +94,7 @@ public class LanguageSchoolRouteBuilder extends RouteBuilder {
                     response.setApplicationId(appId);
                     response.setStatus(status);
                     response.setMessage(result.getReason());
+                    db.remove(appId);
                     db.put(appId, response);
                     stateService.sendEvent(appId, ProcessingEvent.COMPLETE);
                     log.info("COMPLETE: Status dla " + appId + ": " + status);
@@ -107,6 +109,7 @@ public class LanguageSchoolRouteBuilder extends RouteBuilder {
                 response.setApplicationId(appId);
                 response.setStatus(status);
                 response.setMessage(reason);
+                db.remove(appId);
                 db.put(appId, response);
                 stateService.sendEvent(appId, ProcessingEvent.CANCEL);
                 log.info("CANCEL: " + appId);
