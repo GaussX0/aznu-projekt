@@ -35,7 +35,7 @@ public class ApplicationConfig {
     }
 
     @Bean
-    public Endpoint endpoint(Bus bus, LanguageEndpointImpl languageEndpoint) {
+    public Endpoint endpoint(Bus bus, LanguageEndpoint languageEndpoint) {
         EndpointImpl endpoint = new EndpointImpl(bus, languageEndpoint);
         endpoint.publish("/languages");
         return endpoint;

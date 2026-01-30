@@ -11,17 +11,17 @@
         </xsd:schema>
     </wsdl:types>
 
-    <wsdl:message name="checkLanguageRequestMsg">
+    <wsdl:message name="LanguageRequestMsg">
         <wsdl:part element="tns:LanguageRequest" name="parameters"/>
     </wsdl:message>
-    <wsdl:message name="checkLanguageResponseMsg">
+    <wsdl:message name="LanguageResponseMsg">
         <wsdl:part element="tns:LanguageResponse" name="parameters"/>
     </wsdl:message>
 
     <wsdl:portType name="LanguagePort">
         <wsdl:operation name="checkLanguage">
-            <wsdl:input message="tns:checkLanguageRequestMsg"/>
-            <wsdl:output message="tns:checkLanguageResponseMsg"/>
+            <wsdl:input message="tns:LanguageRequestMsg"/>
+            <wsdl:output message="tns:LanguageResponseMsg"/>
         </wsdl:operation>
     </wsdl:portType>
 

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 @Component
-public class LanguageSchoolGatewayService extends RouteBuilder {
+public class LanguageSchoolRouteBuilder extends RouteBuilder {
 
     private static final java.util.Map<String, Response> db = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -71,7 +71,7 @@ public class LanguageSchoolGatewayService extends RouteBuilder {
                 log.info("START: " + appId);
             })
             .marshal().json(JsonLibrary.Jackson)
-            .to("kafka:SchoolReqTopic?brokers={{kafka.server}}")
+            .to("kafka:ReqTopic?brokers={{kafka.server}}")
             .process(exchange -> {
                 String appId = exchange.getMessage().getHeader("applicationId", String.class);
                 Response resp = new Response();
@@ -83,7 +83,7 @@ public class LanguageSchoolGatewayService extends RouteBuilder {
                 exchange.getMessage().setBody(resp);
             });
 
-        from("kafka:SchoolResultTopic?brokers={{kafka.server}}")
+        from("kafka:ResultTopic?brokers={{kafka.server}}")
                 .unmarshal().json(JsonLibrary.Jackson, VerificationResult.class)
                 .process(exchange -> {
                     VerificationResult result = exchange.getMessage().getBody(VerificationResult.class);
@@ -98,9 +98,16 @@ public class LanguageSchoolGatewayService extends RouteBuilder {
                     log.info("COMPLETE: Status dla " + appId + ": " + status);
                 });
 
-        from("kafka:SchoolFailTopic?brokers={{kafka.server}}")
+        from("kafka:FailTopic?brokers={{kafka.server}}")
             .process(exchange -> {
                 String appId = exchange.getMessage().getHeader("applicationId", String.class);
+                String status = "NIE ROZSTRZYGNIĘTO";
+                String reason = "Wystąpił błąd w trakcie weryfikacji, proszę wyślij wniosek ponownie w późniejszym terminie.";
+                Response response = new Response();
+                response.setApplicationId(appId);
+                response.setStatus(status);
+                response.setMessage(reason);
+                db.put(appId, response);
                 stateService.sendEvent(appId, ProcessingEvent.CANCEL);
                 log.info("CANCEL: " + appId);
             });

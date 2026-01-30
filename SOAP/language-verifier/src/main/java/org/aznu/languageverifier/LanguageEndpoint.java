@@ -8,12 +8,12 @@ import org.aznu.languages.wsdl.LanguageRequest;
 import java.util.List;
 
 @Service
-public class LanguageEndpointImpl implements LanguagePort {
+public class LanguageEndpoint implements LanguagePort {
 
     @Override
-    public LanguageResponse checkLanguage(LanguageRequest payload) {
-        String id = payload.getId();
-        String name = payload.getName();
+    public LanguageResponse checkLanguage(LanguageRequest request) {
+        String id = request.getId();
+        String name = request.getName();
 
         LanguageResponse response = new LanguageResponse();
         response.setId(id);

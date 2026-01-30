@@ -11,7 +11,22 @@ public class LanguageWorker extends RouteBuilder {
     @Override
     public void configure() throws Exception {
 
-        from("kafka:SchoolReqTopic?brokers={{kafka.server}}&groupId=verifierGroup")
+        onException(Exception.class)
+                .handled(true)
+                .log("SOAP nieosiągalny.")
+                .process(exchange -> {
+                    String appId = exchange.getMessage().getHeader("applicationId", String.class);
+                    VerificationResult errorResult = new VerificationResult();
+                    errorResult.setApplicationId(appId);
+                    errorResult.setVerified(false);
+                    errorResult.setReason("Wystąpił błąd w trakcie weryfikacji, proszę wyślij wniosek ponownie w późniejszym terminie.");
+                    exchange.getMessage().setBody(errorResult);
+                })
+                .marshal().json(JsonLibrary.Jackson)
+                .to("kafka:FailTopic?brokers={{kafka.server}}")
+                .log("Wysłano powiadomienie o awarii.");
+
+        from("kafka:ReqTopic?brokers={{kafka.server}}&groupId=verifierGroup")
                 .routeId("verify-language-route")
                 .log("Pobrano wniosek: ${body}")
                 .unmarshal().json(JsonLibrary.Jackson, SchoolApplication.class)
@@ -38,8 +53,8 @@ public class LanguageWorker extends RouteBuilder {
                     exchange.getMessage().setBody(result);
                 })
                 .marshal().json(JsonLibrary.Jackson)
-                .to("kafka:SchoolResultTopic?brokers={{kafka.server}}")
-                .log("Sukces, wynik wysłany na SchoolResultTopic.")
+                .to("kafka:ResultTopic?brokers={{kafka.server}}")
+                .log("Zweryfikowano wniosek.")
                 .end();
     }
 }
